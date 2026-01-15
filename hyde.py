@@ -1,9 +1,8 @@
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
+from langchain_classic.chains.llm import LLMChain
+from langchain_core.prompts import PromptTemplate
 
-from cat.log import log
-from cat.mad_hatter.decorators import hook
-
+from cat import log, hook
+from cat.services.memory.models import RecallSettings
 
 # Keys
 HYDE_ANSWER       = "hyde_answer"
@@ -11,8 +10,7 @@ AVERAGE_EMBEDDING = "average_embedding"
 
 
 @hook(priority=1)
-def cat_recall_query(user_message, cat):
-
+def before_cat_reads_message(user_message, cat):
     # Acquire settings
     settings = cat.mad_hatter.get_plugin().load_settings()
     log.debug(f" --------- ACQUIRE SETTINGS ---------")
@@ -25,7 +23,7 @@ def cat_recall_query(user_message, cat):
     )
 
     # Run a LLM chain with the user message as input
-    hypothesis_chain = LLMChain(prompt=hypothesis_prompt, llm=cat._llm)
+    hypothesis_chain = LLMChain(prompt=hypothesis_prompt, llm=cat.large_language_model)
     answer = hypothesis_chain(user_message)
     
     # Save HyDE answer in working memory
@@ -39,13 +37,12 @@ def cat_recall_query(user_message, cat):
 
 
 # Calculates the average between the user's message embedding and the Hyde response embedding
-def _calculate_vector_average(config: dict, cat):
-    
+def _calculate_vector_average(config: RecallSettings, cat):
     # If hyde answer exists, calculate and set average embedding
     if HYDE_ANSWER in cat.working_memory.keys():
         
        # Get user message embedding
-        user_embedding = config['embedding']
+        user_embedding = config.embedding
         
         # Calculate hyde embedding from hyde answer
         hyde_answer = cat.working_memory[HYDE_ANSWER]
@@ -67,20 +64,12 @@ def _calculate_vector_average(config: dict, cat):
     # If average embedding exists, set the embedding
     if AVERAGE_EMBEDDING in cat.working_memory.keys():
         average_embedding = cat.working_memory[AVERAGE_EMBEDDING]
-        config['embedding'] = average_embedding
+        config.embedding = average_embedding
         
         log.debug(f" --------- SET EMBEDDING ---------")
         log.debug(f"average_embedding: {average_embedding}")
         
 
 @hook(priority=1)
-def before_cat_recalls_episodic_memories(config: dict, cat):
-    _calculate_vector_average(config, cat)
-
-@hook(priority=1)
-def before_cat_recalls_declarative_memories(config: dict, cat):
-    _calculate_vector_average(config, cat)
-
-@hook(priority=1)
-def before_cat_recalls_procedural_memories(config: dict, cat):
+def before_cat_recalls_memories(config: RecallSettings, cat):
     _calculate_vector_average(config, cat)
