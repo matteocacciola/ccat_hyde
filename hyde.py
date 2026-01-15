@@ -2,6 +2,7 @@ from langchain_classic.chains.llm import LLMChain
 from langchain_core.prompts import PromptTemplate
 
 from cat import log, hook
+from cat.services.memory.messages import UserMessage
 from cat.services.memory.models import RecallSettings
 
 # Keys
@@ -10,7 +11,7 @@ AVERAGE_EMBEDDING = "average_embedding"
 
 
 @hook(priority=1)
-def before_cat_reads_message(user_message, cat):
+def before_cat_reads_message(user_message: UserMessage, cat):
     # Acquire settings
     settings = cat.mad_hatter.get_plugin().load_settings()
     log.debug(f" --------- ACQUIRE SETTINGS ---------")
@@ -24,13 +25,13 @@ def before_cat_reads_message(user_message, cat):
 
     # Run a LLM chain with the user message as input
     hypothesis_chain = LLMChain(prompt=hypothesis_prompt, llm=cat.large_language_model)
-    answer = hypothesis_chain(user_message)
+    answer = hypothesis_chain(user_message.text)
     
     # Save HyDE answer in working memory
     cat.working_memory[HYDE_ANSWER] = answer["text"]
     
     log.debug("------------- HYDE -------------")
-    log.debug(f"user message: {user_message}")
+    log.debug(f"user message: {user_message.text}")
     log.debug(f"hyde answer: {answer['text']}")
     
     return user_message
