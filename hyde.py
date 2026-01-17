@@ -1,9 +1,7 @@
 from langchain_classic.chains.llm import LLMChain
 from langchain_core.prompts import PromptTemplate
 
-from cat import log, hook
-from cat.services.memory.messages import UserMessage
-from cat.services.memory.models import RecallSettings
+from cat import log, hook, RecallSettings, UserMessage
 
 # Keys
 HYDE_ANSWER       = "hyde_answer"
