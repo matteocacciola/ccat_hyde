@@ -72,3 +72,5 @@ def _calculate_vector_average(config: RecallSettings, cat):
 @hook(priority=1)
 def before_cat_recalls_memories(config: RecallSettings, cat):
     _calculate_vector_average(config, cat)
+
+    return config
