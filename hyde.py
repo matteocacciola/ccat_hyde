@@ -9,9 +9,9 @@ AVERAGE_EMBEDDING = "average_embedding"
 
 
 @hook(priority=1)
-def before_cat_reads_message(user_message: UserMessage, cat):
+async def before_cat_reads_message(user_message: UserMessage, cat):
     # Acquire settings
-    settings = cat.mad_hatter.get_plugin().load_settings()
+    settings = await cat.mad_hatter.get_plugin().load_settings()
     log.debug(f" --------- ACQUIRE SETTINGS ---------")
     log.debug(f"settings: {settings}")
 
@@ -22,7 +22,8 @@ def before_cat_reads_message(user_message: UserMessage, cat):
     )
 
     # Run a LLM chain with the user message as input
-    hypothesis_chain = LLMChain(prompt=hypothesis_prompt, llm=cat.large_language_model)
+    llm = await cat.large_language_model()
+    hypothesis_chain = LLMChain(prompt=hypothesis_prompt, llm=llm)
     answer = hypothesis_chain(user_message.text)
     
     # Save HyDE answer in working memory
@@ -36,16 +37,17 @@ def before_cat_reads_message(user_message: UserMessage, cat):
 
 
 # Calculates the average between the user's message embedding and the Hyde response embedding
-def _calculate_vector_average(config: RecallSettings, cat):
+async def _calculate_vector_average(config: RecallSettings, cat):
     # If hyde answer exists, calculate and set average embedding
     if HYDE_ANSWER in cat.working_memory.keys():
+        embedder = await cat.embedder()
         
        # Get user message embedding
         user_embedding = config.embedding
         
         # Calculate hyde embedding from hyde answer
         hyde_answer = cat.working_memory[HYDE_ANSWER]
-        hyde_embedding = cat.embedder.embed_query(hyde_answer)
+        hyde_embedding = embedder.embed_query(hyde_answer)
 
         # Calculate average embedding and stores it into a working memory
         average_embedding = [(x + y)/2 for x, y in zip(user_embedding, hyde_embedding)]
@@ -70,7 +72,7 @@ def _calculate_vector_average(config: RecallSettings, cat):
         
 
 @hook(priority=1)
-def before_cat_recalls_memories(config: RecallSettings, cat):
-    _calculate_vector_average(config, cat)
+async def before_cat_recalls_memories(config: RecallSettings, cat):
+    await _calculate_vector_average(config, cat)
 
     return config

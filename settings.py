@@ -19,6 +19,7 @@ Sentence:
 - {input} -->""",
     )
 
+
 @plugin
 def settings_schema():
     return MySettings.model_json_schema()
