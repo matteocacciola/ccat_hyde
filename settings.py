@@ -4,8 +4,8 @@ from cat import plugin
 
 class MySettings(BaseModel):
     hyde_prompt: str = Field(
-                title="HyDe prompt",
-                default="""You will be given a sentence.
+        title="HyDe prompt",
+        default="""You will be given a sentence.
 If the sentence is a question, convert it to a plausible answer. If the sentence does not contain a question, 
 just repeat the sentence as is without adding anything to it.
 
