@@ -22,8 +22,7 @@ async def before_cat_reads_message(user_message: UserMessage, cat):
     )
 
     # Run a LLM chain with the user message as input
-    llm = await cat.large_language_model()
-    hypothesis_chain = LLMChain(prompt=hypothesis_prompt, llm=llm)
+    hypothesis_chain = LLMChain(prompt=hypothesis_prompt, llm=cat.large_language_model)
     answer = hypothesis_chain(user_message.text)
     
     # Save HyDE answer in working memory
